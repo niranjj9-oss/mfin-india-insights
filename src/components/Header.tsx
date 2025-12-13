@@ -1,10 +1,20 @@
 import { useState } from "react";
-import { Menu, X, TrendingUp, BookOpen, Shield, Calculator } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Menu, X, TrendingUp, BookOpen, Shield, Calculator, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Logo from "./Logo";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, profile, signOut, loading } = useAuth();
 
   const navItems = [
     { name: "Fund Analytics", icon: TrendingUp, href: "#analytics" },
@@ -13,12 +23,19 @@ const Header = () => {
     { name: "Calculators", icon: Calculator, href: "#calculators" },
   ];
 
+  const handleSignOut = async () => {
+    await signOut();
+    setIsMenuOpen(false);
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Logo size="md" />
+          <Link to="/">
+            <Logo size="md" />
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
@@ -34,14 +51,58 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons / User Menu */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-            <Button variant="hero" size="sm">
-              Get Started Free
-            </Button>
+            {loading ? (
+              <div className="h-9 w-24 bg-secondary/50 animate-pulse rounded-lg" />
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="hidden lg:inline max-w-[120px] truncate">
+                      {profile?.full_name || user.email?.split('@')[0]}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 glass">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                    {profile?.pan_number && (
+                      <p className="text-xs text-primary mt-1">
+                        PAN: {profile.pan_number.slice(0, 4)}****{profile.pan_number.slice(-1)}
+                      </p>
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    My Portfolio
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="hero" size="sm">
+                    Get Started Free
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -70,12 +131,36 @@ const Header = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border/50">
-                <Button variant="ghost" className="w-full">
-                  Sign In
-                </Button>
-                <Button variant="hero" className="w-full">
-                  Get Started Free
-                </Button>
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-3 py-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{profile?.full_name || 'User'}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="hero" className="w-full">
+                        Get Started Free
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>
