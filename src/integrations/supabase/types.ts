@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      mf_central_connections: {
+        Row: {
+          connected_at: string
+          connection_status: string
+          created_at: string
+          folios_count: number | null
+          id: string
+          last_synced_at: string | null
+          pan_number: string
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string
+          connection_status?: string
+          created_at?: string
+          folios_count?: number | null
+          id?: string
+          last_synced_at?: string | null
+          pan_number: string
+          user_id: string
+        }
+        Update: {
+          connected_at?: string
+          connection_status?: string
+          created_at?: string
+          folios_count?: number | null
+          id?: string
+          last_synced_at?: string | null
+          pan_number?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      portfolio_holdings: {
+        Row: {
+          amc_name: string
+          category: string
+          created_at: string
+          current_value: number
+          folio_number: string
+          id: string
+          invested_value: number
+          nav: number
+          returns_percentage: number | null
+          scheme_code: string | null
+          scheme_name: string
+          units: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amc_name: string
+          category: string
+          created_at?: string
+          current_value: number
+          folio_number: string
+          id?: string
+          invested_value: number
+          nav: number
+          returns_percentage?: number | null
+          scheme_code?: string | null
+          scheme_name: string
+          units: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amc_name?: string
+          category?: string
+          created_at?: string
+          current_value?: number
+          folio_number?: string
+          id?: string
+          invested_value?: number
+          nav?: number
+          returns_percentage?: number | null
+          scheme_code?: string | null
+          scheme_name?: string
+          units?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           aadhaar_masked_ref: string | null
