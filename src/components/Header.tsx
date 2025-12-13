@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, TrendingUp, BookOpen, Shield, Calculator, User, LogOut } from "lucide-react";
+import { Menu, X, TrendingUp, BookOpen, Shield, Calculator, User, LogOut, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,10 +17,10 @@ const Header = () => {
   const { user, profile, signOut, loading } = useAuth();
 
   const navItems = [
-    { name: "Fund Analytics", icon: TrendingUp, href: "#analytics" },
-    { name: "Learning Hub", icon: BookOpen, href: "#learning" },
-    { name: "Risk Tools", icon: Shield, href: "#tools" },
-    { name: "Calculators", icon: Calculator, href: "#calculators" },
+    { name: "Compare Funds", icon: Scale, href: "/compare", isLink: true },
+    { name: "Learning Hub", icon: BookOpen, href: "#learning", isLink: false },
+    { name: "Risk Tools", icon: Shield, href: "#tools", isLink: false },
+    { name: "Calculators", icon: Calculator, href: "#calculators", isLink: false },
   ];
 
   const handleSignOut = async () => {
@@ -39,16 +39,27 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
-              >
-                <item.icon className="h-4 w-4" />
-                {item.name}
-              </a>
-            ))}
+            {navItems.map((item) =>
+              item.isLink ? (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
+                </Link>
+              ) : (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
+                </a>
+              )
+            )}
           </nav>
 
           {/* CTA Buttons / User Menu */}
@@ -121,17 +132,29 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border/50 animate-fade-in">
             <nav className="flex flex-col gap-4">
-              {navItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="flex items-center gap-3 px-4 py-2 text-foreground hover:bg-secondary rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <item.icon className="h-5 w-5 text-primary" />
-                  {item.name}
-                </a>
-              ))}
+              {navItems.map((item) =>
+                item.isLink ? (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="flex items-center gap-3 px-4 py-2 text-foreground hover:bg-secondary rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <item.icon className="h-5 w-5 text-primary" />
+                    {item.name}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className="flex items-center gap-3 px-4 py-2 text-foreground hover:bg-secondary rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <item.icon className="h-5 w-5 text-primary" />
+                    {item.name}
+                  </a>
+                )
+              )}
               <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border/50">
                 {user ? (
                   <>
