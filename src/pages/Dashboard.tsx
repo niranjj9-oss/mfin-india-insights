@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -13,6 +13,8 @@ import {
   ExternalLink,
   RefreshCw,
   AlertTriangle,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,20 +22,25 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { MFCentralConnect } from '@/components/MFCentralConnect';
 import { useAuth } from '@/hooks/useAuth';
+import { usePortfolio } from '@/hooks/usePortfolio';
 
 export default function Dashboard() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [showMFCentralModal, setShowMFCentralModal] = useState(false);
+  
+  const { connection, holdings, summary, loading: portfolioLoading, refetch } = usePortfolio(user?.id);
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate('/auth', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -48,6 +55,16 @@ export default function Dashboard() {
   const panMasked = profile?.pan_number
     ? `${profile.pan_number.slice(0, 4)}****${profile.pan_number.slice(-1)}`
     : 'Not provided';
+
+  const isConnected = !!connection;
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   return (
     <>
@@ -140,6 +157,25 @@ export default function Dashboard() {
                     )}
                   </div>
 
+                  {/* MF Central Connection */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">MF Central</span>
+                    </div>
+                    {isConnected ? (
+                      <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Connected
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-border">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Not Connected
+                      </Badge>
+                    )}
+                  </div>
+
                   {/* Aadhaar Status */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -159,23 +195,16 @@ export default function Dashboard() {
                     )}
                   </div>
 
-                  {!profile?.aadhaar_verified && (
-                    <Button variant="outline" size="sm" className="w-full mt-4">
-                      <Shield className="h-4 w-4 mr-2" />
-                      Verify Aadhaar via OTP
-                    </Button>
-                  )}
-
                   {/* Verification Progress */}
                   <div className="pt-4">
                     <div className="flex items-center justify-between text-sm mb-2">
                       <span className="text-muted-foreground">Profile Completion</span>
                       <span className="font-medium">
-                        {profile?.pan_verified && profile?.aadhaar_verified ? '100%' : profile?.pan_verified ? '50%' : '25%'}
+                        {isConnected && profile?.aadhaar_verified ? '100%' : isConnected ? '75%' : profile?.pan_verified ? '50%' : '25%'}
                       </span>
                     </div>
                     <Progress
-                      value={profile?.pan_verified && profile?.aadhaar_verified ? 100 : profile?.pan_verified ? 50 : 25}
+                      value={isConnected && profile?.aadhaar_verified ? 100 : isConnected ? 75 : profile?.pan_verified ? 50 : 25}
                       className="h-2"
                     />
                   </div>
@@ -185,123 +214,170 @@ export default function Dashboard() {
 
             {/* Right Column - Portfolio Section */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Portfolio Overview Placeholder */}
-              <Card className="glass border-border/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Wallet className="h-5 w-5 text-primary" />
-                        Portfolio Overview
-                      </CardTitle>
-                      <CardDescription>
-                        Aggregated from MF Central, CAMS & KFintech
-                      </CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm" disabled>
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Sync
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="h-20 w-20 rounded-full bg-secondary/50 flex items-center justify-center mb-4">
-                      <PieChart className="h-10 w-10 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">Connect Your Portfolio</h3>
-                    <p className="text-sm text-muted-foreground max-w-md mb-6">
-                      Link your investments via MF Central to view consolidated holdings, 
-                      track performance, and get personalized analytics.
-                    </p>
-                    <Button className="gap-2">
-                      <ExternalLink className="h-4 w-4" />
-                      Connect to MF Central
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-4">
-                      Secure connection via RTA-authorized channels
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Quick Stats Placeholders */}
-              <div className="grid sm:grid-cols-3 gap-4">
+              {/* Portfolio Overview */}
+              {!isConnected ? (
                 <Card className="glass border-border/50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/20">
-                        <Wallet className="h-5 w-5 text-primary" />
-                      </div>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-muted-foreground">Total Investment</p>
-                        <p className="text-xl font-bold">₹ --</p>
+                        <CardTitle className="flex items-center gap-2">
+                          <Wallet className="h-5 w-5 text-primary" />
+                          Portfolio Overview
+                        </CardTitle>
+                        <CardDescription>
+                          Aggregated from MF Central, CAMS & KFintech
+                        </CardDescription>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass border-border/50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-green-500/20">
-                        <TrendingUp className="h-5 w-5 text-green-400" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="h-20 w-20 rounded-full bg-secondary/50 flex items-center justify-center mb-4">
+                        <PieChart className="h-10 w-10 text-muted-foreground" />
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Current Value</p>
-                        <p className="text-xl font-bold">₹ --</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass border-border/50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-accent/20">
-                        <PieChart className="h-5 w-5 text-accent" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Total Returns</p>
-                        <p className="text-xl font-bold">-- %</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Holdings Placeholder */}
-              <Card className="glass border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">Your Holdings</CardTitle>
-                  <CardDescription>
-                    Fund-wise breakdown of your investments
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-4 p-4 rounded-lg bg-secondary/30 animate-pulse"
+                      <h3 className="text-lg font-semibold mb-2">Connect Your Portfolio</h3>
+                      <p className="text-sm text-muted-foreground max-w-md mb-6">
+                        Link your investments via MF Central to view consolidated holdings, 
+                        track performance, and get personalized analytics.
+                      </p>
+                      <Button 
+                        className="gap-2"
+                        onClick={() => setShowMFCentralModal(true)}
                       >
-                        <div className="h-10 w-10 rounded-full bg-secondary" />
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-secondary rounded w-3/4" />
-                          <div className="h-3 bg-secondary rounded w-1/2" />
+                        <ExternalLink className="h-4 w-4" />
+                        Connect to MF Central
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-4">
+                        Secure connection via RTA-authorized channels
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {/* Connected Portfolio Header */}
+                  <Card className="glass border-border/50 border-green-500/30">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-green-500/20">
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">Portfolio Connected</CardTitle>
+                            <CardDescription>
+                              Last synced: {connection.last_synced_at 
+                                ? new Date(connection.last_synced_at).toLocaleString('en-IN')
+                                : 'Just now'
+                              }
+                            </CardDescription>
+                          </div>
                         </div>
-                        <div className="text-right space-y-2">
-                          <div className="h-4 bg-secondary rounded w-20" />
-                          <div className="h-3 bg-secondary rounded w-16" />
-                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={refetch}
+                          disabled={portfolioLoading}
+                        >
+                          <RefreshCw className={`h-4 w-4 mr-2 ${portfolioLoading ? 'animate-spin' : ''}`} />
+                          Sync
+                        </Button>
                       </div>
-                    ))}
-                  </div>
-                  <p className="text-center text-sm text-muted-foreground mt-4">
-                    Connect your portfolio to view holdings
-                  </p>
-                </CardContent>
-              </Card>
+                    </CardHeader>
+                  </Card>
+
+                  {/* Quick Stats */}
+                  {summary && (
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      <Card className="glass border-border/50">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/20">
+                              <Wallet className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Total Investment</p>
+                              <p className="text-xl font-bold">{formatCurrency(summary.totalInvested)}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="glass border-border/50">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-green-500/20">
+                              <TrendingUp className="h-5 w-5 text-green-400" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Current Value</p>
+                              <p className="text-xl font-bold">{formatCurrency(summary.currentValue)}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="glass border-border/50">
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${summary.returnsPercentage >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                              {summary.returnsPercentage >= 0 ? (
+                                <ArrowUpRight className="h-5 w-5 text-green-400" />
+                              ) : (
+                                <ArrowDownRight className="h-5 w-5 text-red-400" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Total Returns</p>
+                              <p className={`text-xl font-bold ${summary.returnsPercentage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {summary.returnsPercentage >= 0 ? '+' : ''}{summary.returnsPercentage.toFixed(2)}%
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Holdings List */}
+                  <Card className="glass border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Your Holdings ({holdings.length})</CardTitle>
+                      <CardDescription>
+                        Fund-wise breakdown of your investments
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {holdings.map((holding) => (
+                          <div
+                            key={holding.id}
+                            className="flex items-center gap-4 p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                          >
+                            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                              <PieChart className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{holding.scheme_name}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>{holding.category}</span>
+                                <span>•</span>
+                                <span>Folio: {holding.folio_number}</span>
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-semibold">{formatCurrency(holding.current_value)}</p>
+                              <p className={`text-xs ${(holding.returns_percentage || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {(holding.returns_percentage || 0) >= 0 ? '+' : ''}{holding.returns_percentage?.toFixed(2)}%
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
             </div>
           </div>
 
@@ -317,6 +393,20 @@ export default function Dashboard() {
       </main>
 
       <Footer />
+
+      {/* MF Central Connection Modal */}
+      {profile?.pan_number && (
+        <MFCentralConnect
+          isOpen={showMFCentralModal}
+          onClose={() => setShowMFCentralModal(false)}
+          onSuccess={() => {
+            setShowMFCentralModal(false);
+            refetch();
+          }}
+          panNumber={profile.pan_number}
+          userId={user.id}
+        />
+      )}
     </>
   );
 }
