@@ -78,9 +78,11 @@ const Header = () => {
                     )}
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    My Portfolio
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link to="/dashboard">
+                      <User className="mr-2 h-4 w-4" />
+                      My Dashboard
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
@@ -142,6 +144,12 @@ const Header = () => {
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
+                    <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start">
+                        <User className="mr-2 h-4 w-4" />
+                        My Dashboard
+                      </Button>
+                    </Link>
                     <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign Out
